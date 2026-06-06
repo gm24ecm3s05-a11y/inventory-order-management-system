@@ -56,52 +56,50 @@ function App() {
       alert(err.response?.data?.detail || "Order failed");
     }
   };
+
+  const deleteProduct = async (id) => {
+    await axios.delete(`${API}/products/${id}`);
+    loadData();
+  };
+
+  const deleteCustomer = async (id) => {
+    await axios.delete(`${API}/customers/${id}`);
+    loadData();
+  };
+
+  const deleteOrder = async (id) => {
+    await axios.delete(`${API}/orders/${id}`);
+    loadData();
+  };
+
   const addDemoCustomers = async () => {
-  const demoCustomers = [
-    {
-      name: "Prathmesh Gawande",
-      email: "prathmesh@example.com",
-      phone: "9876543210"
-    },
-    {
-      name: "Madhav Gawande",
-      email: "madhav@example.com",
-      phone: "9766733164"
-    },
-    {
-      name: "Rohit Patil",
-      email: "rohit@example.com",
-      phone: "9988776655"
-    },
-    {
-      name: "Sanket Shinde",
-      email: "sanket@example.com",
-      phone: "9123456789"
-    },
-    {
-      name: "Akash Deshmukh",
-      email: "akash@example.com",
-      phone: "9012345678"
-    }
-  ];
+    const demoCustomers = [
+      { name: "Prathmesh Gawande", email: "prathmesh@example.com", phone: "9876543210" },
+      { name: "Madhav Gawande", email: "madhav@example.com", phone: "9766733164" },
+      { name: "Rohit Patil", email: "rohit@example.com", phone: "9988776655" },
+      { name: "Sanket Shinde", email: "sanket@example.com", phone: "9123456789" },
+      { name: "Akash Deshmukh", email: "akash@example.com", phone: "9012345678" },
+    ];
 
-  for (const customer of demoCustomers) {
-    try {
-      await axios.post(`${API}/customers`, customer);
-    } catch (error) {
-      console.log("Customer already exists");
+    for (const customer of demoCustomers) {
+      try {
+        await axios.post(`${API}/customers`, customer);
+      } catch (error) {
+        console.log("Customer already exists");
+      }
     }
-  }
 
-  loadData();
-};
+    loadData();
+  };
 
   return (
     <div className="container">
       <h1>Inventory & Order Management System</h1>
+
       <button onClick={addDemoCustomers} className="demo-btn">
-      Add 5 Demo Customers
+        Add 5 Demo Customers
       </button>
+
       <div className="card">
         <h2>Add Product</h2>
         <form onSubmit={addProduct}>
@@ -148,11 +146,14 @@ function App() {
       <h2>Products</h2>
       <table>
         <thead>
-          <tr><th>ID</th><th>Name</th><th>SKU</th><th>Price</th><th>Stock</th></tr>
+          <tr><th>ID</th><th>Name</th><th>SKU</th><th>Price</th><th>Stock</th><th>Action</th></tr>
         </thead>
         <tbody>
           {products.map((p) => (
-            <tr key={p.id}><td>{p.id}</td><td>{p.name}</td><td>{p.sku}</td><td>{p.price}</td><td>{p.stock}</td></tr>
+            <tr key={p.id}>
+              <td>{p.id}</td><td>{p.name}</td><td>{p.sku}</td><td>{p.price}</td><td>{p.stock}</td>
+              <td><button onClick={() => deleteProduct(p.id)}>Delete</button></td>
+            </tr>
           ))}
         </tbody>
       </table>
@@ -160,11 +161,14 @@ function App() {
       <h2>Customers</h2>
       <table>
         <thead>
-          <tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th></tr>
+          <tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Action</th></tr>
         </thead>
         <tbody>
           {customers.map((c) => (
-            <tr key={c.id}><td>{c.id}</td><td>{c.name}</td><td>{c.email}</td><td>{c.phone}</td></tr>
+            <tr key={c.id}>
+              <td>{c.id}</td><td>{c.name}</td><td>{c.email}</td><td>{c.phone}</td>
+              <td><button onClick={() => deleteCustomer(c.id)}>Delete</button></td>
+            </tr>
           ))}
         </tbody>
       </table>
@@ -172,11 +176,14 @@ function App() {
       <h2>Orders</h2>
       <table>
         <thead>
-          <tr><th>ID</th><th>Customer ID</th><th>Product ID</th><th>Quantity</th><th>Total</th></tr>
+          <tr><th>ID</th><th>Customer ID</th><th>Product ID</th><th>Quantity</th><th>Total</th><th>Action</th></tr>
         </thead>
         <tbody>
           {orders.map((o) => (
-            <tr key={o.id}><td>{o.id}</td><td>{o.customer_id}</td><td>{o.product_id}</td><td>{o.quantity}</td><td>{o.total_amount}</td></tr>
+            <tr key={o.id}>
+              <td>{o.id}</td><td>{o.customer_id}</td><td>{o.product_id}</td><td>{o.quantity}</td><td>{o.total_amount}</td>
+              <td><button onClick={() => deleteOrder(o.id)}>Delete</button></td>
+            </tr>
           ))}
         </tbody>
       </table>
@@ -185,6 +192,3 @@ function App() {
 }
 
 export default App;
-
-
-
