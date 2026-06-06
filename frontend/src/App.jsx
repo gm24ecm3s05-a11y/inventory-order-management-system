@@ -94,7 +94,7 @@ function App() {
 
   return (
     <div className="container">
-      <h1>Inventory & Order Management System</h1>
+      <h1>📦 Inventory & Order Management System</h1>
 
       <button onClick={addDemoCustomers} className="demo-btn">
         Add 5 Demo Customers
