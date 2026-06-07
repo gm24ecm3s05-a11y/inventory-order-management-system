@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import "./App.css";
 
-const API = "https://inventory-order-management-system-1-rftc.onrender.com";
+const API = "http://127.0.0.1:8000";
 
 function App() {
   const [products, setProducts] = useState([]);
@@ -18,8 +18,9 @@ function App() {
       setProducts((await axios.get(`${API}/products`)).data);
       setCustomers((await axios.get(`${API}/customers`)).data);
       setOrders((await axios.get(`${API}/orders`)).data);
-    } catch (err) {
-      console.log(err);
+    } catch (err) { 
+      console.log("LOAD ERROR:", err);
+      alert("Backend connect होत नाही");
     }
   };
 
@@ -29,47 +30,77 @@ function App() {
 
   const addCustomer = async (e) => {
     e.preventDefault();
-    await axios.post(`${API}/customers`, customer);
-    setCustomer({ name: "", email: "", phone: "" });
-    loadData();
+    try {
+      await axios.post(`${API}/customers`, customer);
+      setCustomer({ name: "", email: "", phone: "" });
+      loadData();
+    } catch (err) {
+      console.log("ADD CUSTOMER ERROR:", err);
+      alert(err.response?.data?.detail || "Customer add failed");
+    }
   };
 
   const deleteCustomer = async (id) => {
-    await axios.delete(`${API}/customers/${id}`);
-    loadData();
+    try {
+      await axios.delete(`${API}/customers/${id}`);
+      loadData();
+    } catch (err) {
+      console.log("DELETE CUSTOMER ERROR:", err);
+      alert(err.response?.data?.detail || "Customer delete failed");
+    }
   };
 
   const addProduct = async (e) => {
     e.preventDefault();
-    await axios.post(`${API}/products`, {
-      name: product.name,
-      sku: product.sku,
-      price: Number(product.price),
-      stock: Number(product.stock),
-    });
-    setProduct({ name: "", sku: "", price: "", stock: "" });
-    loadData();
+    try {
+      await axios.post(`${API}/products`, {
+        name: product.name,
+        sku: product.sku,
+        price: Number(product.price),
+        stock: Number(product.stock),
+      });
+      setProduct({ name: "", sku: "", price: "", stock: "" });
+      loadData();
+    } catch (err) {
+      console.log("ADD PRODUCT ERROR:", err);
+      alert(err.response?.data?.detail || "Product add failed");
+    }
   };
 
   const deleteProduct = async (id) => {
-    await axios.delete(`${API}/products/${id}`);
-    loadData();
+    try {
+      await axios.delete(`${API}/products/${id}`);
+      loadData();
+    } catch (err) {
+      console.log("DELETE PRODUCT ERROR:", err);
+      alert(err.response?.data?.detail || "Product delete failed");
+    }
   };
 
   const addOrder = async (e) => {
     e.preventDefault();
-    await axios.post(`${API}/orders`, {
-      customer_id: Number(order.customer_id),
-      product_id: Number(order.product_id),
-      quantity: Number(order.quantity),
-    });
-    setOrder({ customer_id: "", product_id: "", quantity: "" });
-    loadData();
+    try {
+      await axios.post(`${API}/orders`, {
+        customer_id: Number(order.customer_id),
+        product_id: Number(order.product_id),
+        quantity: Number(order.quantity),
+      });
+      setOrder({ customer_id: "", product_id: "", quantity: "" });
+      loadData();
+    } catch (err) {
+      console.log("ADD ORDER ERROR:", err);
+      alert(err.response?.data?.detail || "Order create failed");
+    }
   };
 
   const deleteOrder = async (id) => {
-    await axios.delete(`${API}/orders/${id}`);
-    loadData();
+    try {
+      await axios.delete(`${API}/orders/${id}`);
+      loadData();
+    } catch (err) {
+      console.log("DELETE ORDER ERROR:", err);
+      alert(err.response?.data?.detail || "Order delete failed");
+    }
   };
 
   return (
