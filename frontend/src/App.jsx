@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import "./App.css";
 
-const API = "http://127.0.0.1:8000";
+   const API = "https://inventory-order-management-system-1-rftc.onrender.com";
+
 
 function App() {
   const [customers, setCustomers] = useState([]);
