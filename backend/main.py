@@ -31,6 +31,7 @@ def home():
 def create_product(product: schemas.ProductCreate, db: Session = Depends(get_db)):
     if db.query(models.Product).filter(models.Product.sku == product.sku).first():
         raise HTTPException(status_code=400, detail="SKU already exists")
+
     item = models.Product(**product.dict())
     db.add(item)
     db.commit()
@@ -45,6 +46,7 @@ def get_products(db: Session = Depends(get_db)):
 def create_customer(customer: schemas.CustomerCreate, db: Session = Depends(get_db)):
     if db.query(models.Customer).filter(models.Customer.email == customer.email).first():
         raise HTTPException(status_code=400, detail="Email already exists")
+
     item = models.Customer(**customer.dict())
     db.add(item)
     db.commit()
@@ -68,12 +70,14 @@ def create_order(order: schemas.OrderCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Insufficient stock")
 
     product.stock -= order.quantity
+
     new_order = models.Order(
         customer_id=order.customer_id,
         product_id=order.product_id,
         quantity=order.quantity,
         total_amount=product.price * order.quantity
     )
+
     db.add(new_order)
     db.commit()
     db.refresh(new_order)
@@ -90,11 +94,11 @@ def delete_product(product_id: int, db: Session = Depends(get_db)):
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
+    db.query(models.Order).filter(models.Order.product_id == product_id).delete()
     db.delete(product)
     db.commit()
 
-    return {"message": "Product deleted successfully"}
-
+    return {"message": "Product and related orders deleted successfully"}
 
 @app.delete("/customers/{customer_id}")
 def delete_customer(customer_id: int, db: Session = Depends(get_db)):
@@ -103,11 +107,11 @@ def delete_customer(customer_id: int, db: Session = Depends(get_db)):
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
 
+    db.query(models.Order).filter(models.Order.customer_id == customer_id).delete()
     db.delete(customer)
     db.commit()
 
-    return {"message": "Customer deleted successfully"}
-
+    return {"message": "Customer and related orders deleted successfully"}
 
 @app.delete("/orders/{order_id}")
 def delete_order(order_id: int, db: Session = Depends(get_db)):
