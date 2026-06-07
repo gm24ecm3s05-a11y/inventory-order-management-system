@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import "./App.css";
-
-const API = "http://192.168.1.5:8000";  
+const API = "http://127.0.0.1:8000";
 
 function App() {
   const [products, setProducts] = useState([]);
@@ -15,13 +14,11 @@ function App() {
 
   const loadData = async () => {
     try {
-      setProducts((await axios.get(${API}/products)).data);
-      setCustomers((await axios.get(${API}/customers)).data);
-      setOrders((await axios.get(${API}/orders)).data);
-    } catch {
-      setProducts([]);
-      setCustomers([]);
-      setOrders([]);
+      setProducts((await axios.get(`${API}/products`)).data);
+      setCustomers((await axios.get(`${API}/customers`)).data);
+      setOrders((await axios.get(`${API}/orders`)).data);
+    } catch (err) {
+      console.log(err);
     }
   };
 
@@ -31,59 +28,47 @@ function App() {
 
   const addCustomer = async (e) => {
     e.preventDefault();
-    try {
-      await axios.post(${API}/customers, customer);
-      setCustomer({ name: "", email: "", phone: "" });
-      loadData();
-    } catch {}
+    await axios.post(`${API}/customers`, customer);
+    setCustomer({ name: "", email: "", phone: "" });
+    loadData();
   };
 
   const deleteCustomer = async (id) => {
-    try {
-      await axios.delete(${API}/customers/${id});
-      loadData();
-    } catch {}
+    await axios.delete(`${API}/customers/${id}`);
+    loadData();
   };
 
   const addProduct = async (e) => {
     e.preventDefault();
-    try {
-      await axios.post(${API}/products, {
-        name: product.name,
-        sku: product.sku,
-        price: Number(product.price),
-        stock: Number(product.stock),
-      });
-      setProduct({ name: "", sku: "", price: "", stock: "" });
-      loadData();
-    } catch {}
+    await axios.post(`${API}/products`, {
+      name: product.name,
+      sku: product.sku,
+      price: Number(product.price),
+      stock: Number(product.stock),
+    });
+    setProduct({ name: "", sku: "", price: "", stock: "" });
+    loadData();
   };
 
   const deleteProduct = async (id) => {
-    try {
-      await axios.delete(${API}/products/${id});
-      loadData();
-    } catch {}
+    await axios.delete(`${API}/products/${id}`);
+    loadData();
   };
 
   const addOrder = async (e) => {
     e.preventDefault();
-    try {
-      await axios.post(${API}/orders, {
-        customer_id: Number(order.customer_id),
-        product_id: Number(order.product_id),
-        quantity: Number(order.quantity),
-      });
-      setOrder({ customer_id: "", product_id: "", quantity: "" });
-      loadData();
-    } catch {}
+    await axios.post(`${API}/orders`, {
+      customer_id: Number(order.customer_id),
+      product_id: Number(order.product_id),
+      quantity: Number(order.quantity),
+    });
+    setOrder({ customer_id: "", product_id: "", quantity: "" });
+    loadData();
   };
 
   const deleteOrder = async (id) => {
-    try {
-      await axios.delete(${API}/orders/${id});
-      loadData();
-    } catch {}
+    await axios.delete(`${API}/orders/${id}`);
+    loadData();
   };
 
   return (
