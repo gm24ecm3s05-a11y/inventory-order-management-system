@@ -3,6 +3,7 @@ import axios from "axios";
 import "./App.css";
 
 const API = "https://inventory-order-management-system-1-rftc.onrender.com";
+// local साठी: const API = "http://127.0.0.1:8000";
 
 function App() {
   const [products, setProducts] = useState([]);
@@ -30,13 +31,9 @@ function App() {
 
   const loadData = async () => {
     try {
-      const productsRes = await axios.get(`${API}/products`);
-      const customersRes = await axios.get(`${API}/customers`);
-      const ordersRes = await axios.get(`${API}/orders`);
-
-      setProducts(productsRes.data);
-      setCustomers(customersRes.data);
-      setOrders(ordersRes.data);
+      setProducts((await axios.get(`${API}/products`)).data);
+      setCustomers((await axios.get(`${API}/customers`)).data);
+      setOrders((await axios.get(`${API}/orders`)).data);
     } catch (err) {
       alert("Backend connect होत नाही ❌");
       console.log(err);
@@ -47,306 +44,99 @@ function App() {
     loadData();
   }, []);
 
-  const addCustomer = async (e) => {
-    e.preventDefault();
-
-    try {
-      await axios.post(`${API}/customers`, customer);
-      alert("Customer Added ✅");
-      setCustomer({ name: "", email: "", phone: "" });
-      loadData();
-    } catch (err) {
-      alert(err.response?.data?.detail || "Customer Add Failed ❌");
-      console.log(err);
-    }
+  const addProduct = async () => {
+    await axios.post(`${API}/products`, {
+      ...product,
+      price: Number(product.price),
+      stock: Number(product.stock),
+    });
+    setProduct({ name: "", sku: "", price: "", stock: "" });
+    loadData();
   };
 
-  const deleteCustomer = async (id) => {
-    try {
-      await axios.delete(`${API}/customers/${id}`);
-      alert("Customer Deleted ✅");
-      loadData();
-    } catch (err) {
-      alert(err.response?.data?.detail || "Customer Delete Failed ❌");
-      console.log(err);
-    }
+  const addCustomer = async () => {
+    await axios.post(`${API}/customers`, customer);
+    setCustomer({ name: "", email: "", phone: "" });
+    loadData();
   };
 
-  const addProduct = async (e) => {
-    e.preventDefault();
-
-    try {
-      await axios.post(`${API}/products`, {
-        name: product.name,
-        sku: product.sku,
-        price: Number(product.price),
-        stock: Number(product.stock),
-      });
-
-      alert("Product Added ✅");
-      setProduct({ name: "", sku: "", price: "", stock: "" });
-      loadData();
-    } catch (err) {
-      alert(err.response?.data?.detail || "Product Add Failed ❌");
-      console.log(err);
-    }
+  const addOrder = async () => {
+    await axios.post(`${API}/orders`, {
+      customer_id: Number(order.customer_id),
+      product_id: Number(order.product_id),
+      quantity: Number(order.quantity),
+    });
+    setOrder({ customer_id: "", product_id: "", quantity: "" });
+    loadData();
   };
 
   const deleteProduct = async (id) => {
-    try {
-      await axios.delete(`${API}/products/${id}`);
-      alert("Product Deleted ✅");
-      loadData();
-    } catch (err) {
-      alert(err.response?.data?.detail || "Product Delete Failed ❌");
-      console.log(err);
-    }
+    await axios.delete(`${API}/products/${id}`);
+    loadData();
   };
 
-  const addOrder = async (e) => {
-    e.preventDefault();
-
-    try {
-      await axios.post(`${API}/orders`, {
-        customer_id: Number(order.customer_id),
-        product_id: Number(order.product_id),
-        quantity: Number(order.quantity),
-      });
-
-      alert("Order Created ✅");
-      setOrder({ customer_id: "", product_id: "", quantity: "" });
-      loadData();
-    } catch (err) {
-      alert(err.response?.data?.detail || "Order Failed ❌");
-      console.log(err);
-    }
+  const deleteCustomer = async (id) => {
+    await axios.delete(`${API}/customers/${id}`);
+    loadData();
   };
 
   const deleteOrder = async (id) => {
-    try {
-      await axios.delete(`${API}/orders/${id}`);
-      alert("Order Deleted ✅");
-      loadData();
-    } catch (err) {
-      alert(err.response?.data?.detail || "Order Delete Failed ❌");
-      console.log(err);
-    }
+    await axios.delete(`${API}/orders/${id}`);
+    loadData();
   };
 
   return (
     <div className="container">
-      <h1>📦 Inventory & Order Management System</h1>
+      <h1>Inventory Order Management System</h1>
 
-      <div className="card">
-        <h2>Add Customer</h2>
-        <form onSubmit={addCustomer}>
-          <input
-            placeholder="Customer Name"
-            value={customer.name}
-            onChange={(e) =>
-              setCustomer({ ...customer, name: e.target.value })
-            }
-            required
-          />
-
-          <input
-            placeholder="Email"
-            type="email"
-            value={customer.email}
-            onChange={(e) =>
-              setCustomer({ ...customer, email: e.target.value })
-            }
-            required
-          />
-
-          <input
-            placeholder="Phone"
-            value={customer.phone}
-            onChange={(e) =>
-              setCustomer({ ...customer, phone: e.target.value })
-            }
-          />
-
-          <button type="submit">Add Customer</button>
-        </form>
-      </div>
-
-      <h2>Customers</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Phone</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {customers.map((c) => (
-            <tr key={c.id}>
-              <td>{c.id}</td>
-              <td>{c.name}</td>
-              <td>{c.email}</td>
-              <td>{c.phone}</td>
-              <td>
-                <button onClick={() => deleteCustomer(c.id)}>Delete</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      <div className="card">
+      <section>
         <h2>Add Product</h2>
-        <form onSubmit={addProduct}>
-          <input
-            placeholder="Product Name"
-            value={product.name}
-            onChange={(e) =>
-              setProduct({ ...product, name: e.target.value })
-            }
-            required
-          />
+        <input placeholder="Name" value={product.name} onChange={(e) => setProduct({ ...product, name: e.target.value })} />
+        <input placeholder="SKU" value={product.sku} onChange={(e) => setProduct({ ...product, sku: e.target.value })} />
+        <input placeholder="Price" value={product.price} onChange={(e) => setProduct({ ...product, price: e.target.value })} />
+        <input placeholder="Stock" value={product.stock} onChange={(e) => setProduct({ ...product, stock: e.target.value })} />
+        <button onClick={addProduct}>Add Product</button>
+      </section>
 
-          <input
-            placeholder="SKU"
-            value={product.sku}
-            onChange={(e) =>
-              setProduct({ ...product, sku: e.target.value })
-            }
-            required
-          />
+      <section>
+        <h2>Add Customer</h2>
+        <input placeholder="Name" value={customer.name} onChange={(e) => setCustomer({ ...customer, name: e.target.value })} />
+        <input placeholder="Email" value={customer.email} onChange={(e) => setCustomer({ ...customer, email: e.target.value })} />
+        <input placeholder="Phone" value={customer.phone} onChange={(e) => setCustomer({ ...customer, phone: e.target.value })} />
+        <button onClick={addCustomer}>Add Customer</button>
+      </section>
 
-          <input
-            placeholder="Price"
-            type="number"
-            value={product.price}
-            onChange={(e) =>
-              setProduct({ ...product, price: e.target.value })
-            }
-            required
-          />
-
-          <input
-            placeholder="Stock"
-            type="number"
-            value={product.stock}
-            onChange={(e) =>
-              setProduct({ ...product, stock: e.target.value })
-            }
-            required
-          />
-
-          <button type="submit">Add Product</button>
-        </form>
-      </div>
+      <section>
+        <h2>Add Order</h2>
+        <input placeholder="Customer ID" value={order.customer_id} onChange={(e) => setOrder({ ...order, customer_id: e.target.value })} />
+        <input placeholder="Product ID" value={order.product_id} onChange={(e) => setOrder({ ...order, product_id: e.target.value })} />
+        <input placeholder="Quantity" value={order.quantity} onChange={(e) => setOrder({ ...order, quantity: e.target.value })} />
+        <button onClick={addOrder}>Add Order</button>
+      </section>
 
       <h2>Products</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>SKU</th>
-            <th>Price</th>
-            <th>Stock</th>
-            <th>Action</th>
-          </tr>
-        </thead>
+      {products.map((p) => (
+        <div className="card" key={p.id}>
+          {p.id}. {p.name} | SKU: {p.sku} | ₹{p.price} | Stock: {p.stock}
+          <button onClick={() => deleteProduct(p.id)}>Delete</button>
+        </div>
+      ))}
 
-        <tbody>
-          {products.map((p) => (
-            <tr key={p.id}>
-              <td>{p.id}</td>
-              <td>{p.name}</td>
-              <td>{p.sku}</td>
-              <td>{p.price}</td>
-              <td>{p.stock}</td>
-              <td>
-                <button onClick={() => deleteProduct(p.id)}>Delete</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      <div className="card">
-        <h2>Create Order</h2>
-        <form onSubmit={addOrder}>
-          <select
-            value={order.customer_id}
-            onChange={(e) =>
-              setOrder({ ...order, customer_id: e.target.value })
-            }
-            required
-          >
-            <option value="">Select Customer</option>
-            {customers.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={order.product_id}
-            onChange={(e) =>
-              setOrder({ ...order, product_id: e.target.value })
-            }
-            required
-          >
-            <option value="">Select Product</option>
-            {products.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name} - Stock {p.stock}
-              </option>
-            ))}
-          </select>
-
-          <input
-            placeholder="Quantity"
-            type="number"
-            value={order.quantity}
-            onChange={(e) =>
-              setOrder({ ...order, quantity: e.target.value })
-            }
-            required
-          />
-
-          <button type="submit">Create Order</button>
-        </form>
-      </div>
+      <h2>Customers</h2>
+      {customers.map((c) => (
+        <div className="card" key={c.id}>
+          {c.id}. {c.name} | {c.email} | {c.phone}
+          <button onClick={() => deleteCustomer(c.id)}>Delete</button>
+        </div>
+      ))}
 
       <h2>Orders</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Customer ID</th>
-            <th>Product ID</th>
-            <th>Quantity</th>
-            <th>Total</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {orders.map((o) => (
-            <tr key={o.id}>
-              <td>{o.id}</td>
-              <td>{o.customer_id}</td>
-              <td>{o.product_id}</td>
-              <td>{o.quantity}</td>
-              <td>{o.total_amount}</td>
-              <td>
-                <button onClick={() => deleteOrder(o.id)}>Delete</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {orders.map((o) => (
+        <div className="card" key={o.id}>
+          Order ID: {o.id} | Customer ID: {o.customer_id} | Product ID: {o.product_id} | Qty: {o.quantity} | Total: ₹{o.total_amount}
+          <button onClick={() => deleteOrder(o.id)}>Delete</button>
+        </div>
+      ))}
     </div>
   );
 }
