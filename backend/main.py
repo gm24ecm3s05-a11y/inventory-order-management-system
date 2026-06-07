@@ -1,14 +1,12 @@
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-
 from database import Base, engine, SessionLocal
-import models
-import schemas
-
-app = FastAPI()
+import models, schemas
 
 Base.metadata.create_all(bind=engine)
+
+app = FastAPI(title="Inventory & Order Management API")
 
 app.add_middleware(
     CORSMiddleware,
@@ -29,8 +27,6 @@ def get_db():
 def home():
     return {"message": "API Running"}
 
-# ---------------- PRODUCTS ----------------
-
 @app.post("/products", response_model=schemas.ProductResponse)
 def create_product(product: schemas.ProductCreate, db: Session = Depends(get_db)):
     if db.query(models.Product).filter(models.Product.sku == product.sku).first():
@@ -45,21 +41,6 @@ def create_product(product: schemas.ProductCreate, db: Session = Depends(get_db)
 @app.get("/products", response_model=list[schemas.ProductResponse])
 def get_products(db: Session = Depends(get_db)):
     return db.query(models.Product).all()
-
-@app.delete("/products/{product_id}")
-def delete_product(product_id: int, db: Session = Depends(get_db)):
-    product = db.query(models.Product).filter(models.Product.id == product_id).first()
-
-    if not product:
-        raise HTTPException(status_code=404, detail="Product not found")
-
-    db.query(models.Order).filter(models.Order.product_id == product_id).delete()
-    db.delete(product)
-    db.commit()
-
-    return {"message": "Product deleted successfully"}
-
-# ---------------- CUSTOMERS ----------------
 
 @app.post("/customers", response_model=schemas.CustomerResponse)
 def create_customer(customer: schemas.CustomerCreate, db: Session = Depends(get_db)):
@@ -76,37 +57,15 @@ def create_customer(customer: schemas.CustomerCreate, db: Session = Depends(get_
 def get_customers(db: Session = Depends(get_db)):
     return db.query(models.Customer).all()
 
-@app.delete("/customers/{customer_id}")
-def delete_customer(customer_id: int, db: Session = Depends(get_db)):
-    customer = db.query(models.Customer).filter(models.Customer.id == customer_id).first()
-
-    if not customer:
-        raise HTTPException(status_code=404, detail="Customer not found")
-
-    db.query(models.Order).filter(models.Order.customer_id == customer_id).delete()
-    db.delete(customer)
-    db.commit()
-
-    return {"message": "Customer deleted successfully"}
-
-# ---------------- ORDERS ----------------
-
 @app.post("/orders", response_model=schemas.OrderResponse)
 def create_order(order: schemas.OrderCreate, db: Session = Depends(get_db)):
-    customer = db.query(models.Customer).filter(
-        models.Customer.id == order.customer_id
-    ).first()
-
-    product = db.query(models.Product).filter(
-        models.Product.id == order.product_id
-    ).first()
+    customer = db.query(models.Customer).filter(models.Customer.id == order.customer_id).first()
+    product = db.query(models.Product).filter(models.Product.id == order.product_id).first()
 
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
-
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
-
     if product.stock < order.quantity:
         raise HTTPException(status_code=400, detail="Insufficient stock")
 
@@ -122,12 +81,37 @@ def create_order(order: schemas.OrderCreate, db: Session = Depends(get_db)):
     db.add(new_order)
     db.commit()
     db.refresh(new_order)
-
     return new_order
 
 @app.get("/orders", response_model=list[schemas.OrderResponse])
 def get_orders(db: Session = Depends(get_db)):
     return db.query(models.Order).all()
+
+@app.delete("/products/{product_id}")
+def delete_product(product_id: int, db: Session = Depends(get_db)):
+    product = db.query(models.Product).filter(models.Product.id == product_id).first()
+
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    db.query(models.Order).filter(models.Order.product_id == product_id).delete()
+    db.delete(product)
+    db.commit()
+
+    return {"message": "Product and related orders deleted successfully"}
+
+@app.delete("/customers/{customer_id}")
+def delete_customer(customer_id: int, db: Session = Depends(get_db)):
+    customer = db.query(models.Customer).filter(models.Customer.id == customer_id).first()
+
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+
+    db.query(models.Order).filter(models.Order.customer_id == customer_id).delete()
+    db.delete(customer)
+    db.commit()
+
+    return {"message": "Customer and related orders deleted successfully"}
 
 @app.delete("/orders/{order_id}")
 def delete_order(order_id: int, db: Session = Depends(get_db)):
