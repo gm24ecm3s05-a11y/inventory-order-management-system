@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import "./App.css";
 
-const API = "https://inventory-order-management-system-iu6l.onrender.com";
+const API = "http://127.0.0.1:8000";
+``
 
 function App() {
   const [products, setProducts] = useState([]);
