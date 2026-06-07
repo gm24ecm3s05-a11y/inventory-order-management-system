@@ -46,13 +46,15 @@ def get_products(db: Session = Depends(get_db)):
 @app.delete("/products/{product_id}")
 def delete_product(product_id: int, db: Session = Depends(get_db)):
     product = db.query(models.Product).filter(models.Product.id == product_id).first()
+
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
     db.query(models.Order).filter(models.Order.product_id == product_id).delete()
     db.delete(product)
     db.commit()
-    return {"message": "Product deleted successfully"}
+
+    return {"message": "Product and related orders deleted successfully"}
 
 @app.post("/customers", response_model=schemas.CustomerResponse)
 def create_customer(customer: schemas.CustomerCreate, db: Session = Depends(get_db)):
@@ -72,13 +74,15 @@ def get_customers(db: Session = Depends(get_db)):
 @app.delete("/customers/{customer_id}")
 def delete_customer(customer_id: int, db: Session = Depends(get_db)):
     customer = db.query(models.Customer).filter(models.Customer.id == customer_id).first()
+
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
 
     db.query(models.Order).filter(models.Order.customer_id == customer_id).delete()
     db.delete(customer)
     db.commit()
-    return {"message": "Customer deleted successfully"}
+
+    return {"message": "Customer and related orders deleted successfully"}
 
 @app.post("/orders", response_model=schemas.OrderResponse)
 def create_order(order: schemas.OrderCreate, db: Session = Depends(get_db)):
@@ -87,8 +91,13 @@ def create_order(order: schemas.OrderCreate, db: Session = Depends(get_db)):
 
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
+
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
+
+    if order.quantity <= 0:
+        raise HTTPException(status_code=400, detail="Quantity must be greater than 0")
+
     if product.stock < order.quantity:
         raise HTTPException(status_code=400, detail="Insufficient stock")
 
@@ -104,6 +113,7 @@ def create_order(order: schemas.OrderCreate, db: Session = Depends(get_db)):
     db.add(new_order)
     db.commit()
     db.refresh(new_order)
+
     return new_order
 
 @app.get("/orders", response_model=list[schemas.OrderResponse])
@@ -117,6 +127,12 @@ def delete_order(order_id: int, db: Session = Depends(get_db)):
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
+    product = db.query(models.Product).filter(models.Product.id == order.product_id).first()
+
+    if product:
+        product.stock += order.quantity
+
     db.delete(order)
     db.commit()
-    return {"message": "Order deleted successfully"}
+
+    return {"message": "Order deleted successfully and stock restored"}
