@@ -1,5 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import axios from "axios";
 import "./App.css";
+
+const API = "http://127.0.0.1:8000";
 
 function App() {
   const [customers, setCustomers] = useState([]);
@@ -10,68 +13,73 @@ function App() {
   const [product, setProduct] = useState({ name: "", sku: "", price: "", stock: "" });
   const [order, setOrder] = useState({ customer_id: "", product_id: "", quantity: "" });
 
-  const addCustomer = (e) => {
+  const loadData = async () => {
+    try {
+      setCustomers((await axios.get(`${API}/customers`)).data);
+      setProducts((await axios.get(`${API}/products`)).data);
+      setOrders((await axios.get(`${API}/orders`)).data);
+    } catch (err) {
+      alert("Backend connect होत नाही ❌");
+      console.log(err);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const addCustomer = async (e) => {
     e.preventDefault();
-    setCustomers([...customers, { id: Date.now(), ...customer }]);
+    await axios.post(`${API}/customers`, customer);
     setCustomer({ name: "", email: "", phone: "" });
+    loadData();
   };
 
-  const deleteCustomer = (id) => {
-    setCustomers(customers.filter((c) => c.id !== id));
-    setOrders(orders.filter((o) => o.customer_id !== id));
+  const deleteCustomer = async (id) => {
+    await axios.delete(`${API}/customers/${id}`);
+    loadData();
   };
 
-  const addProduct = (e) => {
+  const addProduct = async (e) => {
     e.preventDefault();
-    setProducts([
-      ...products,
-      {
-        id: Date.now(),
-        name: product.name,
-        sku: product.sku,
-        price: Number(product.price),
-        stock: Number(product.stock),
-      },
-    ]);
+    await axios.post(`${API}/products`, {
+      ...product,
+      price: Number(product.price),
+      stock: Number(product.stock),
+    });
     setProduct({ name: "", sku: "", price: "", stock: "" });
+    loadData();
   };
 
-  const deleteProduct = (id) => {
-    setProducts(products.filter((p) => p.id !== id));
-    setOrders(orders.filter((o) => o.product_id !== id));
+  const deleteProduct = async (id) => {
+    await axios.delete(`${API}/products/${id}`);
+    loadData();
   };
 
-  const addOrder = (e) => {
+  const addOrder = async (e) => {
     e.preventDefault();
 
-    const selectedProduct = products.find((p) => p.id === Number(order.product_id));
-    if (!selectedProduct) return;
-
-    const qty = Number(order.quantity);
-    if (qty > selectedProduct.stock) return;
-
-    setOrders([
-      ...orders,
-      {
-        id: Date.now(),
+    try {
+      await axios.post(`${API}/orders`, {
         customer_id: Number(order.customer_id),
         product_id: Number(order.product_id),
-        quantity: qty,
-        total_amount: selectedProduct.price * qty,
-      },
-    ]);
+        quantity: Number(order.quantity),
+      });
 
-    setProducts(
-      products.map((p) =>
-        p.id === selectedProduct.id ? { ...p, stock: p.stock - qty } : p
-      )
-    );
-
-    setOrder({ customer_id: "", product_id: "", quantity: "" });
+      alert("✅ Order Confirmed! Mail sent.");
+      setOrder({ customer_id: "", product_id: "", quantity: "" });
+      loadData();
+    } catch (err) {
+      alert(err.response?.data?.detail || "Order create failed ❌");
+    }
   };
 
-  const deleteOrder = (id) => {
-    setOrders(orders.filter((o) => o.id !== id));
+  const deleteOrder = async (id) => {
+    if (!window.confirm("Order cancel करायची का?")) return;
+
+    await axios.delete(`${API}/orders/${id}`);
+    alert("❌ Order Cancelled! Customer ला mail sent.");
+    loadData();
   };
 
   return (
@@ -120,7 +128,7 @@ function App() {
             <tr key={p.id}>
               <td>{p.name}</td>
               <td>{p.sku}</td>
-              <td>{p.price}</td>
+              <td>₹{p.price}</td>
               <td>{p.stock}</td>
               <td><button onClick={() => deleteProduct(p.id)}>Delete</button></td>
             </tr>
@@ -154,8 +162,8 @@ function App() {
               <td>{o.customer_id}</td>
               <td>{o.product_id}</td>
               <td>{o.quantity}</td>
-              <td>{o.total_amount}</td>
-              <td><button onClick={() => deleteOrder(o.id)}>Delete</button></td>
+              <td>₹{o.total_amount}</td>
+              <td><button onClick={() => deleteOrder(o.id)}>Cancel</button></td>
             </tr>
           ))}
         </tbody>
